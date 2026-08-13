@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum BookingActivityAction {
+  BOOKING_CREATED
+  STAFF_ASSIGNED
+  STATUS_CHANGED
+  BOOKING_EDITED
+  BOOKING_CANCELLED
+  BOOKING_COMPLETED
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  assignedBookings Booking[]         @relation("AssignedStaff")
+  activities       BookingActivity[]
+
+  @@index([role])
+}
+
+model Customer {
+  id        String    @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  address   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  bookings Booking[]
+
+  @@index([email])
+  @@index([phone])
+}
+
+model Service {
+  id                       String    @id @default(cuid())
+  name                     String
+  description              String    @db.Text
+  basePrice                Decimal   @db.Decimal(10, 2)
+  estimatedDurationMinutes Int
+  active                   Boolean   @default(true)
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  bookings Booking[]
+
+  @@index([active])
+}
+
+model Booking {
+  id                       String        @id @default(cuid())
+  bookingNumber            String        @unique
+  customerId               String
+  serviceId                String
+  assignedStaffId          String?
+  scheduledDate            DateTime      @db.Date
+  scheduledStartTime       String        @db.VarChar(5)
+  estimatedDurationMinutes Int
+  address                  String
+  specialInstructions      String?       @db.Text
+  status                   BookingStatus @default(PENDING)
+  quotedPrice              Decimal       @db.Decimal(10, 2)
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+
+  customer      Customer          @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  service       Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  assignedStaff User?             @relation("AssignedStaff", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  activities    BookingActivity[]
+
+  @@index([customerId])
+  @@index([serviceId])
+  @@index([assignedStaffId])
+  @@index([scheduledDate])
+  @@index([status])
+}
+
+model BookingActivity {
+  id          String                @id @default(cuid())
+  bookingId   String
+  userId      String?
+  action      BookingActivityAction
+  description String
+  createdAt   DateTime              @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@index([userId])
+  @@index([createdAt])
+}

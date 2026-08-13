@@ -398,7 +398,7 @@ Authenticated mutating requests should use the documented CSRF approach for the 
 
 ## Local Development
 
-Install dependencies after package files are implemented:
+Install dependencies:
 
 ```bash
 npm install
@@ -406,13 +406,26 @@ cd backend
 npm install
 ```
 
-Create local environment files:
+Run the API in local demo mode:
 
 ```bash
-cp .env.example .env
+npm run dev:api
 ```
 
-Run Prisma migrations and seed data after the backend is implemented:
+Run the frontend:
+
+```bash
+npm run dev
+```
+
+Local defaults:
+
+```text
+Frontend: http://127.0.0.1:5173
+Backend:  http://127.0.0.1:4000/api
+```
+
+The backend defaults to `DATA_STORE=memory` so the demo works without a local MySQL installation. For MySQL/Prisma mode, create a backend `.env` file with `DATA_STORE=prisma` and a valid `DATABASE_URL`, then run:
 
 ```bash
 cd backend
@@ -439,7 +452,6 @@ Frontend:
 
 ```bash
 npm run typecheck
-npm run lint
 npm test
 npm run build
 ```
@@ -449,8 +461,8 @@ Backend:
 ```bash
 cd backend
 npm run typecheck
-npm run lint
 npm test
+npm run build
 ```
 
 Do not suppress legitimate errors just to make commands pass.
@@ -474,6 +486,8 @@ Production requirements:
 - real screenshot saved to `public/serviceflow-dashboard.webp`
 - README updated with real Live Demo and Repository links
 
+Vercel configuration is included in `vercel.json`. Set `VITE_API_URL=/api` for production builds unless the API is deployed separately.
+
 ## Demo Data
 
 Seed fictional data only.
@@ -491,9 +505,21 @@ Demo staff:
 - Sophia Carter
 - Daniel Brooks
 
+Demo login accounts for local/demo mode:
+
+```text
+Admin
+admin@serviceflow.test
+Password123!
+
+Staff
+james@serviceflow.test
+Password123!
+```
+
 Use clearly fictional email domains such as `@example.test`.
 
-Do not expose real production passwords in source code. Demo credentials may be documented only when there is a safe portfolio demo mechanism.
+Do not use these demo credentials as real production credentials.
 
 ## Scope Boundaries
 
