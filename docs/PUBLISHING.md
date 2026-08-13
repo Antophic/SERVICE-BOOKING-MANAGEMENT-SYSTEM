@@ -1,57 +1,52 @@
 # Publishing Notes
 
-This workspace is already initialized as a local git repository on the `main` branch.
-
-Current blocker:
-
-- GitHub CLI (`gh`) is not installed on this machine.
-- No `GITHUB_TOKEN` or `GH_TOKEN` environment variable is available.
-- The active GitHub connector can create issues/files in an existing repository, but it does not expose a create-repository action.
-
-## Option A - Publish With GitHub Desktop
-
-1. Open GitHub Desktop.
-2. Choose **File > Add local repository**.
-3. Select this folder:
+This workspace is connected to:
 
 ```text
-C:\Users\acer\OneDrive\Dokumen\SERVICE BOOKING MANAGEMENT SYSTEM
+https://github.com/Antophic/SERVICE-BOOKING-MANAGEMENT-SYSTEM.git
 ```
 
-4. Click **Publish repository**.
-5. Use repository name:
+Local branch:
 
 ```text
-serviceflow
+main
 ```
 
-6. Keep it private unless you are ready to show it publicly.
+Remote:
 
-After publishing, update the Repository link in `README.md`.
+```text
+origin
+```
 
-## Option B - Publish With GitHub CLI
+## Current Status
 
-Install GitHub CLI, then authenticate:
+- The local repository has been pushed to GitHub.
+- The README repository link points to the GitHub repository.
+- Initial planning issues have been created from `docs/GITHUB_ISSUES.md`.
+- GitHub CLI (`gh`) is not installed on this machine, so future CLI-based GitHub workflows may require installing it first.
+
+## Useful Commands
+
+Check local status:
+
+```bash
+git status -sb
+```
+
+Push future commits:
+
+```bash
+git push
+```
+
+View remotes:
+
+```bash
+git remote -v
+```
+
+Install and authenticate GitHub CLI if needed later:
 
 ```bash
 gh auth login
 ```
-
-From this folder, run:
-
-```bash
-gh repo create serviceflow --private --source . --remote origin --push
-```
-
-After the repo exists, create GitHub issues from `docs/GITHUB_ISSUES.md`.
-
-## Suggested Next Prompt
-
-After publishing the repo, tell Codex:
-
-```text
-Repo GitHub sudah jadi: owner/serviceflow. Buat issues dari docs/GITHUB_ISSUES.md.
-```
-
-At that point, the GitHub connector can create the issue backlog in the existing repository.
-

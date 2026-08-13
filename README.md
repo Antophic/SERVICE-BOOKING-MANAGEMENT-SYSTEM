@@ -2,7 +2,7 @@
 
 Booking & Job Management for Service Businesses
 
-[Live Demo](#) | [Repository](#)
+[Live Demo](#) | [Repository](https://github.com/Antophic/SERVICE-BOOKING-MANAGEMENT-SYSTEM)
 
 ServiceFlow is a full-stack booking and job management application for service businesses, featuring public booking intake, staff assignment, scheduling conflict detection, role-based dashboards, job status workflows, and database-backed operations.
 
@@ -516,4 +516,3 @@ Do not add:
 - advanced analytics
 - multiple organizations
 - enterprise permissions
-
