@@ -7,8 +7,22 @@ import { SchedulePreview } from "./pages/SchedulePreview";
 import { StaffJobsPreview } from "./pages/StaffJobsPreview";
 import type { PublicUser } from "./types/domain";
 
+const viewPaths: Record<AppView, string> = {
+  dashboard: "/",
+  booking: "/book",
+  staff: "/staff",
+  schedule: "/schedule",
+};
+
+function viewFromPath(pathname: string): AppView {
+  if (pathname.startsWith("/book")) return "booking";
+  if (pathname.startsWith("/staff")) return "staff";
+  if (pathname.startsWith("/schedule")) return "schedule";
+  return "dashboard";
+}
+
 export function App() {
-  const [activeView, setActiveView] = useState<AppView>("dashboard");
+  const [activeView, setActiveView] = useState<AppView>(() => viewFromPath(window.location.pathname));
   const [user, setUser] = useState<PublicUser | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
 
@@ -20,10 +34,26 @@ export function App() {
       .finally(() => setLoadingSession(false));
   }, []);
 
+  useEffect(() => {
+    const handlePopState = () => setActiveView(viewFromPath(window.location.pathname));
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  function handleViewChange(view: AppView) {
+    setActiveView(view);
+
+    const path = viewPaths[view];
+    if (window.location.pathname !== path) {
+      window.history.pushState(null, "", path);
+    }
+  }
+
   async function handleLogout() {
     await api.logout().catch(() => undefined);
     setUser(null);
-    setActiveView("booking");
+    handleViewChange("booking");
   }
 
   if (loadingSession) {
@@ -36,7 +66,7 @@ export function App() {
   }
 
   return (
-    <AppShell activeView={activeView} onViewChange={setActiveView} user={user} onLogout={handleLogout}>
+    <AppShell activeView={activeView} onViewChange={handleViewChange} user={user} onLogout={handleLogout}>
       {activeView === "dashboard" && <OperationsDashboard user={user} onLogin={setUser} />}
       {activeView === "booking" && <PublicBookingPreview />}
       {activeView === "staff" && <StaffJobsPreview user={user} onLogin={setUser} />}

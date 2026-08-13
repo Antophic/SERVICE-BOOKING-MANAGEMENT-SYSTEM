@@ -3,7 +3,7 @@ import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
-import { env } from "./config/env.js";
+import { env, getAllowedClientOrigins } from "./config/env.js";
 import { createAuthMiddleware } from "./middlewares/auth.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import type { DataStore } from "./repositories/types.js";
@@ -17,13 +17,7 @@ import { createStaffRouter } from "./routes/staff.js";
 
 export function createApp(store: DataStore) {
   const app = express();
-  const allowedOrigins = new Set([
-    env.CLIENT_ORIGIN,
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
-  ]);
+  const allowedOrigins = getAllowedClientOrigins();
 
   app.set("trust proxy", 1);
   app.use(helmet());

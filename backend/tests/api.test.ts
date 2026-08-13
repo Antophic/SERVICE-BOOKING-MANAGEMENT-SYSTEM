@@ -39,6 +39,16 @@ describe("ServiceFlow API", () => {
     await agent.get("/api/bookings").expect(403);
   });
 
+  it("returns a CSRF token when restoring an authenticated session", async () => {
+    const { agent } = createTestAgent();
+    await loginAs(agent, "admin@serviceflow.test");
+
+    const response = await agent.get("/api/auth/me").expect(200);
+
+    expect(response.body.user.email).toBe("admin@serviceflow.test");
+    expect(response.body.csrfToken).toEqual(expect.any(String));
+  });
+
   it("enforces staff assigned-job isolation", async () => {
     const { agent } = createTestAgent();
     const csrfToken = await loginAs(agent, "james@serviceflow.test");

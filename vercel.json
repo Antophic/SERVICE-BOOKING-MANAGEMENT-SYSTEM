@@ -1,11 +1,19 @@
 {
-  "installCommand": "npm install && npm --prefix backend install",
-  "buildCommand": "npm run build",
+  "installCommand": "npm ci && npm --prefix backend ci && npm --prefix backend run prisma:generate",
+  "buildCommand": "npm run typecheck:all && npm run build:all && npm --prefix backend run prisma:deploy && npm --prefix backend run prisma:seed",
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/index"
+      "source": "/book",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/staff",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/schedule",
+      "destination": "/index.html"
     }
   ]
 }

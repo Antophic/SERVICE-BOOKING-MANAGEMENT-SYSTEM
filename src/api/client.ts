@@ -70,7 +70,7 @@ export function setCsrfToken(token: string | null) {
 export const api = {
   health: () => request<{ ok: boolean; dataStore: string; timezone: string }>("/health"),
 
-  getMe: () => request<{ user: PublicUser }>("/auth/me"),
+  getMe: () => request<{ user: PublicUser; csrfToken: string }>("/auth/me"),
 
   login: (email: string, password: string) =>
     request<{ user: PublicUser; csrfToken: string }>("/auth/login", {

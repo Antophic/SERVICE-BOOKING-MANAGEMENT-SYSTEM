@@ -11,6 +11,24 @@ function tomorrowDate() {
   return new Date(Date.now() + 24 * 60 * 60 * 1000);
 }
 
+async function upsertCustomer(data: { name: string; email: string; phone: string; address: string }) {
+  const existing = await prisma.customer.findFirst({
+    where: {
+      email: data.email,
+      phone: data.phone,
+    },
+  });
+
+  if (existing) {
+    return prisma.customer.update({
+      where: { id: existing.id },
+      data,
+    });
+  }
+
+  return prisma.customer.create({ data });
+}
+
 async function main() {
   const passwordHash = await bcrypt.hash("Password123!", 12);
 
@@ -95,40 +113,32 @@ async function main() {
     },
   });
 
-  const sarah = await prisma.customer.create({
-    data: {
-      name: "Sarah Mitchell",
-      email: "sarah@example.test",
-      phone: "+1 555 0101",
-      address: "42 Oak Street, Springfield",
-    },
+  const sarah = await upsertCustomer({
+    name: "Sarah Mitchell",
+    email: "sarah@example.test",
+    phone: "+1 555 0101",
+    address: "42 Oak Street, Springfield",
   });
 
-  const emma = await prisma.customer.create({
-    data: {
-      name: "Emma Carter",
-      email: "emma@example.test",
-      phone: "+1 555 0102",
-      address: "18 Maple Avenue, Brookfield",
-    },
+  const emma = await upsertCustomer({
+    name: "Emma Carter",
+    email: "emma@example.test",
+    phone: "+1 555 0102",
+    address: "18 Maple Avenue, Brookfield",
   });
 
-  const noah = await prisma.customer.create({
-    data: {
-      name: "Noah Bennett",
-      email: "noah@example.test",
-      phone: "+1 555 0103",
-      address: "900 Market Road, Suite 210",
-    },
+  const noah = await upsertCustomer({
+    name: "Noah Bennett",
+    email: "noah@example.test",
+    phone: "+1 555 0103",
+    address: "900 Market Road, Suite 210",
   });
 
-  const olivia = await prisma.customer.create({
-    data: {
-      name: "Olivia Hayes",
-      email: "olivia@example.test",
-      phone: "+1 555 0104",
-      address: "75 Pine Lane, Riverton",
-    },
+  const olivia = await upsertCustomer({
+    name: "Olivia Hayes",
+    email: "olivia@example.test",
+    phone: "+1 555 0104",
+    address: "75 Pine Lane, Riverton",
   });
 
   const demoBookings = [
@@ -187,20 +197,31 @@ async function main() {
   ];
 
   for (const booking of demoBookings) {
+    const { bookingNumber, ...bookingData } = booking;
     const created = await prisma.booking.upsert({
-      where: { bookingNumber: booking.bookingNumber },
-      update: {},
+      where: { bookingNumber },
+      update: bookingData,
       create: booking,
     });
 
-    await prisma.bookingActivity.create({
-      data: {
+    const existingActivity = await prisma.bookingActivity.findFirst({
+      where: {
         bookingId: created.id,
-        userId: booking.assignedStaffId ? admin.id : null,
         action: "BOOKING_CREATED",
         description: "Booking request created.",
       },
     });
+
+    if (!existingActivity) {
+      await prisma.bookingActivity.create({
+        data: {
+          bookingId: created.id,
+          userId: booking.assignedStaffId ? admin.id : null,
+          action: "BOOKING_CREATED",
+          description: "Booking request created.",
+        },
+      });
+    }
   }
 }
 

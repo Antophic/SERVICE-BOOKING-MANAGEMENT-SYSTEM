@@ -74,33 +74,29 @@ Database
   Prisma ORM
 ```
 
-Planned frontend structure:
+Frontend structure:
 
 ```text
 src/
   api/
   components/
   hooks/
-  utils/
-  constants/
   pages/
   types/
+  utils/
 ```
 
-Planned backend structure:
+Backend structure:
 
 ```text
 backend/
   prisma/
-  docs/
+  tests/
   src/
     config/
-    constants/
-    controllers/
     middlewares/
     repositories/
     routes/
-    services/
     types/
     utils/
     validators/
@@ -469,11 +465,7 @@ Do not suppress legitimate errors just to make commands pass.
 
 ## Deployment
 
-Target deployment:
-
-```text
-Vercel
-```
+Target deployment: Vercel.
 
 Production requirements:
 
@@ -486,7 +478,22 @@ Production requirements:
 - real screenshot saved to `public/serviceflow-dashboard.webp`
 - README updated with real Live Demo and Repository links
 
-Vercel configuration is included in `vercel.json`. Set `VITE_API_URL=/api` for production builds unless the API is deployed separately.
+Vercel configuration is included in `vercel.json`.
+
+Current Vercel build flow:
+
+```text
+1. Install frontend and backend dependencies
+2. Generate Prisma Client
+3. Typecheck frontend and backend
+4. Build frontend and backend
+5. Apply Prisma migrations to MySQL
+6. Seed fictional demo data
+```
+
+Set `VITE_API_URL=/api` for production builds unless the API is deployed separately.
+
+Full deployment instructions are in [`docs/VERCEL_DEPLOYMENT.md`](docs/VERCEL_DEPLOYMENT.md).
 
 ## Demo Data
 

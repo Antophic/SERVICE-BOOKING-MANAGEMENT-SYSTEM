@@ -38,7 +38,10 @@ export function createAuthRouter(store: DataStore) {
   });
 
   router.get("/me", requireAuth, (request, response) => {
-    response.json({ user: request.user });
+    const csrfToken = request.cookies?.[env.CSRF_COOKIE_NAME] ?? createCsrfToken();
+
+    response.cookie(env.CSRF_COOKIE_NAME, csrfToken, csrfCookieOptions());
+    response.json({ user: request.user, csrfToken });
   });
 
   return router;
