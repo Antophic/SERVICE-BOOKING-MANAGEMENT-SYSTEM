@@ -1,120 +1,115 @@
 # Suggested GitHub Issues
 
-Use these issue bodies when publishing the initial GitHub backlog.
+Use these issue bodies when publishing the initial GitHub backlog. They follow the five required project phases from the specification.
 
-## 1. Phase 1 - Project foundation and database schema
+## 1. Phase 1 - Foundation: structure, database, auth, and authorization
 
-Create the foundational full-stack structure for ServiceFlow.
+Create the foundational full-stack architecture for ServiceFlow.
 
 Acceptance checklist:
 
 - [ ] React + Vite + TypeScript frontend exists
-- [ ] Node.js + Express + TypeScript backend exists
-- [ ] Prisma is configured for MySQL
-- [ ] User, Customer, Service, Booking, and BookingActivity models are implemented
-- [ ] Required enums and indexes are added
-- [ ] Demo services and staff are seeded with fictional data
-- [ ] `.env.example` documents all required variables
-
-## 2. Phase 2 - Authentication and authorization
-
-Implement secure internal authentication and role-based access.
-
-Acceptance checklist:
-
-- [ ] Login, logout, and session restore endpoints exist
+- [ ] Node.js + Express.js + TypeScript backend exists
+- [ ] Frontend folders follow `src/api`, `src/components`, `src/hooks`, `src/utils`, `src/constants`, `src/pages`, and `src/types`
+- [ ] Backend folders follow `backend/src/config`, `constants`, `controllers`, `middlewares`, `repositories`, `routes`, `services`, `types`, `utils`, and `validators`
+- [ ] MySQL and Prisma are configured
+- [ ] User, Customer, Service, Booking, and BookingActivity models exist
+- [ ] Roles are limited to `ADMIN` and `STAFF`
+- [ ] Booking statuses are limited to `PENDING`, `CONFIRMED`, `IN_PROGRESS`, `COMPLETED`, and `CANCELLED`
+- [ ] Useful booking indexes are added
+- [ ] Demo services, staff, and a small set of bookings are seeded
+- [ ] Login, logout, and session restore work
 - [ ] JWT is stored in an HTTP-only cookie
 - [ ] Passwords are hashed with bcrypt
-- [ ] Admin-only routes reject unauthenticated and staff requests
-- [ ] Staff routes enforce assigned-job record isolation
-- [ ] Sensitive fields and stack traces are never exposed
+- [ ] Admin and staff authorization are enforced on the backend
 
-## 3. Phase 3 - Public booking request flow
+## 2. Phase 2 - Core Booking: public intake, booking CRUD, numbers, and status workflow
 
-Build the public customer booking workflow.
+Build the public-to-internal booking workflow.
 
 Acceptance checklist:
 
-- [ ] `/book` public page exists
-- [ ] Active services populate from the API
-- [ ] Customer and schedule fields are validated
+- [ ] Public `/book` route exists
+- [ ] Customer can submit a booking without an account
+- [ ] Active services populate from the database
+- [ ] Name, email, phone, address, service, date, and time are validated
 - [ ] Past bookings are rejected
-- [ ] Booking numbers use `SF-1001` style references
-- [ ] Customer, Booking, and BookingActivity are created in a transaction
-- [ ] Public booking submission has rate limiting
-- [ ] Confirmation message displays the generated booking number
+- [ ] Duplicate submissions are disabled while creating a booking
+- [ ] Public booking creates Customer, Booking, and BookingActivity in a transaction
+- [ ] Booking numbers use the `SF-1001` pattern and are unique
+- [ ] Admin can view, edit, cancel, and inspect bookings
+- [ ] Booking detail shows booking, customer, assignment, instructions, and activity history
+- [ ] Backend validates all status transitions
+- [ ] Invalid transitions such as `COMPLETED -> PENDING` are rejected
 
-## 4. Phase 4 - Admin operations dashboard and booking management
+## 3. Phase 3 - Operations: assignment, conflict detection, dashboard, search, filters, and staff workflow
 
-Build admin tools for daily operations.
-
-Acceptance checklist:
-
-- [ ] Operations Dashboard displays database-backed KPIs
-- [ ] Booking list supports search, filters, and server-side pagination
-- [ ] Booking detail view shows customer, service, assignment, instructions, and activity
-- [ ] Admin can edit, cancel, assign staff, and update booking status
-- [ ] Staff list is available without adding HR/payroll scope
-- [ ] Loading, empty, and error states are implemented
-
-## 5. Phase 5 - Staff dashboard and job status workflow
-
-Build the staff-facing assigned job workflow.
+Build the operational workflow that proves this is more than CRUD.
 
 Acceptance checklist:
 
-- [ ] Staff can log in
-- [ ] Staff see only their assigned jobs
-- [ ] Jobs are split into Today and Upcoming
-- [ ] Job detail shows customer contact, address, service, instructions, and schedule
-- [ ] Staff can start Confirmed jobs
-- [ ] Staff can complete In Progress jobs
-- [ ] Staff cannot operate unrelated jobs
-
-## 6. Phase 6 - Scheduling conflict detection and schedule view
-
-Implement the scheduling logic that makes ServiceFlow more than CRUD.
-
-Acceptance checklist:
-
-- [ ] Backend calculates scheduled end time from start time and duration
-- [ ] Assigning overlapping jobs to the same staff member is rejected
-- [ ] Conflict response is professional and documented
+- [ ] Admin can assign a staff member to a booking
+- [ ] Assignment writes `STAFF_ASSIGNED` activity
+- [ ] Backend detects overlapping assignments for the same staff member
+- [ ] Overlapping assignment returns a professional conflict response
 - [ ] Non-overlapping assignment succeeds
-- [ ] Daily or weekly schedule endpoint exists
-- [ ] Simple schedule view shows jobs by staff
-- [ ] Demo timezone behavior is documented
+- [ ] Operations Dashboard shows Today's Bookings, Pending Requests, Jobs In Progress, Completed Today, and Today's Revenue
+- [ ] Dashboard values come from the database
+- [ ] Booking search supports booking number, customer name, customer email, and phone
+- [ ] Filters support status, service, staff, and date
+- [ ] Search and filters work together with server-side pagination
+- [ ] Search input uses a 300-400 ms debounce
+- [ ] Staff dashboard shows Today and Upcoming assigned jobs
+- [ ] Staff can open assigned job detail
+- [ ] Staff can start Confirmed jobs and complete In Progress jobs
+- [ ] Staff cannot access or operate unrelated jobs
 
-## 7. Phase 7 - Security, accessibility, and responsive polish
+## 4. Phase 4 - Product Quality: activity, states, responsive UI, accessibility, and security review
 
-Harden the product experience for portfolio-quality delivery.
+Polish ServiceFlow into a serious operations SaaS portfolio project.
 
 Acceptance checklist:
 
-- [ ] Helmet, CORS, body limits, cookies, rate limiting, and centralized error handling are configured
-- [ ] Authenticated mutating requests follow the documented CSRF approach
+- [ ] Activity log is visible and chronological
+- [ ] Loading states exist for dashboard, bookings, status updates, assignment, and booking creation
+- [ ] Empty states exist for no bookings today, no assigned jobs, and no search results
+- [ ] Friendly production error messages are shown
+- [ ] Toast feedback exists for booking created, staff assigned, booking confirmed, job started, job completed, and booking cancelled
+- [ ] Public booking page works well on mobile
+- [ ] Admin tables reorganize into readable mobile layouts
+- [ ] No horizontal overflow at 375px, 390px, 430px, 768px, 1024px, and desktop widths
+- [ ] UI uses clean white surfaces, restrained neutral colors, subtle borders, clear typography, and professional status badges
 - [ ] Forms have labels and inline validation messages
 - [ ] Keyboard navigation and visible focus states work
-- [ ] Public booking page works well on phone widths
-- [ ] Admin tables adapt into readable mobile layouts
-- [ ] Toast notifications are consistent
+- [ ] Dialogs and icon-only controls are accessible
+- [ ] Helmet, CORS, body limits, rate limits, cookie settings, validation, authorization, and error handling are reviewed
+- [ ] CSRF approach for authenticated mutations is documented
 
-## 8. Phase 8 - Tests, build, deployment, and README screenshot
+## 5. Phase 5 - Engineering Quality: tests, quality gates, deployment, screenshot, and README
 
-Finish engineering quality gates and portfolio presentation.
+Validate, deploy, and present the finished portfolio project.
 
 Acceptance checklist:
 
-- [ ] Auth tests cover 401 behavior
-- [ ] Authorization tests cover staff/admin boundaries
-- [ ] Record isolation test covers Staff A and Staff B assigned jobs
-- [ ] Booking validation tests reject past dates
-- [ ] Status workflow tests reject invalid transitions
-- [ ] Scheduling tests cover overlap and non-overlap assignment
-- [ ] Public booking test creates Customer, Booking, and Activity
-- [ ] Dashboard tests verify database-backed metrics where practical
-- [ ] Typecheck, lint, test, and production build pass
-- [ ] App is deployed to Vercel
-- [ ] Real screenshot is saved to `public/serviceflow-dashboard.webp`
-- [ ] README contains live demo, repository link, and final screenshot
+- [ ] Unauthenticated admin route tests return 401
+- [ ] Staff admin-endpoint authorization tests return 403
+- [ ] Staff A and Staff B record isolation test is implemented
+- [ ] Past booking validation test is implemented
+- [ ] Invalid status transition test is implemented
+- [ ] Scheduling conflict test returns 409 for overlap
+- [ ] Scheduling non-conflict test succeeds
+- [ ] Public booking transaction test creates Customer, Booking, and Activity
+- [ ] Dashboard metric tests verify database-backed values where practical
+- [ ] Frontend `npm run typecheck` passes
+- [ ] Frontend `npm run lint` passes
+- [ ] Frontend `npm test` passes
+- [ ] Frontend `npm run build` passes
+- [ ] Backend `npm run typecheck` passes
+- [ ] Backend `npm run lint` passes
+- [ ] Backend `npm test` passes
+- [ ] Vercel deployment is configured
+- [ ] Required production environment variables are documented
+- [ ] Real deployed screenshot is saved as `public/serviceflow-dashboard.webp`
+- [ ] README includes final Live Demo and Repository links
+- [ ] README uses the real production screenshot
 

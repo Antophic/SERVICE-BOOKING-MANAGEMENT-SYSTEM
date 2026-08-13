@@ -1,88 +1,112 @@
 # ServiceFlow Roadmap
 
-This roadmap converts the product specification into implementation phases suitable for GitHub issues.
+This roadmap follows the required priority order from the project specification.
 
 ## Phase 1 - Foundation
 
-- [ ] Create frontend project with React, Vite, and TypeScript
-- [ ] Create backend project with Node.js, Express.js, and TypeScript
-- [ ] Configure shared project conventions and scripts
-- [ ] Add Prisma and MySQL configuration
-- [ ] Implement database schema for users, customers, services, bookings, and booking activity
-- [ ] Seed services, staff users, and demo bookings
-- [ ] Add `.env.example` documentation
+1. Project structure
+2. Database schema
+3. Seed services/staff
+4. Backend API architecture
+5. Authentication
+6. Authorization
 
-## Phase 2 - Authentication and Authorization
+Acceptance checklist:
 
-- [ ] Implement login, logout, and session restore
-- [ ] Store JWT in HTTP-only cookies
-- [ ] Hash passwords with bcrypt
-- [ ] Add admin-only route protection
-- [ ] Add staff-only and assigned-record authorization
-- [ ] Centralize auth errors and safe response messages
+- [ ] Frontend structure exists under `src/`
+- [ ] Backend structure exists under `backend/src/`
+- [ ] MySQL and Prisma are configured
+- [ ] User, Customer, Service, Booking, and BookingActivity models exist
+- [ ] Role, status, and activity enums are defined
+- [ ] Useful indexes are added for booking queries
+- [ ] Demo services, staff, and bookings are seeded
+- [ ] Admin/staff accounts are controlled through seed data or another safe internal mechanism
+- [ ] Auth middleware verifies JWT cookies
+- [ ] Authorization middleware enforces role and record access
 
-## Phase 3 - Public Booking Workflow
+## Phase 2 - Core Booking
 
-- [ ] Build public `/book` route
-- [ ] Load active services from the API
-- [ ] Validate customer, service, schedule, address, and instructions with Zod
-- [ ] Reject past bookings and invalid time values
-- [ ] Generate unique public booking numbers
-- [ ] Create customer, booking, and activity records in a transaction
-- [ ] Add public booking rate limiting
-- [ ] Show a professional booking confirmation message
+7. Public booking form
+8. Booking CRUD
+9. Booking number generation
+10. Status workflow
 
-## Phase 4 - Admin Operations
+Acceptance checklist:
 
-- [ ] Build Operations Dashboard
-- [ ] Show database-backed KPI cards
-- [ ] Implement booking list with server-side pagination
-- [ ] Add search by booking number, customer name, customer email, and phone
-- [ ] Add filters by status, service, staff, and date
-- [ ] Add booking detail panel or page
-- [ ] Add booking edit, cancel, assignment, and status actions
-- [ ] Add activity timeline
-- [ ] Add lightweight staff list
+- [ ] `/book` exists and is publicly accessible
+- [ ] Active services load from the database
+- [ ] Customer fields are validated
+- [ ] Schedule fields reject invalid dates and times
+- [ ] Public booking creates Customer, Booking, and BookingActivity in a transaction
+- [ ] Booking numbers use the `SF-1001` pattern and are unique
+- [ ] Admin can view, edit, cancel, and inspect bookings
+- [ ] Backend validates allowed status transitions
 
-## Phase 5 - Staff Workflow
+## Phase 3 - Operations
 
-- [ ] Build staff login flow using shared auth
-- [ ] Build My Jobs dashboard
-- [ ] Split assigned jobs into Today and Upcoming
-- [ ] Build staff job detail view
-- [ ] Allow Confirmed -> In Progress for assigned jobs
-- [ ] Allow In Progress -> Completed for assigned jobs
-- [ ] Prevent staff from accessing unrelated jobs
+11. Staff assignment
+12. Scheduling conflict detection
+13. Admin dashboard
+14. Search/filter/pagination
+15. Staff dashboard
 
-## Phase 6 - Scheduling Logic
+Acceptance checklist:
 
-- [ ] Implement backend time range calculation
-- [ ] Detect overlapping staff bookings before assignment
-- [ ] Return documented conflict responses
-- [ ] Add schedule endpoint
-- [ ] Build simple daily or weekly schedule view
-- [ ] Document timezone behavior
+- [ ] Admin can assign staff to bookings
+- [ ] Assignment creates activity history
+- [ ] Backend rejects overlapping staff assignments
+- [ ] Dashboard KPIs come from database records
+- [ ] Search works by booking number, customer name, customer email, and phone
+- [ ] Filters work by status, service, staff, and date
+- [ ] Search and filters work together with server-side pagination
+- [ ] Staff can view only assigned jobs
+- [ ] Staff can start and complete assigned jobs
+- [ ] Simple schedule view shows booked slots by staff
 
-## Phase 7 - Product Quality
+## Phase 4 - Product Quality
 
-- [ ] Add loading states
-- [ ] Add empty states
-- [ ] Add friendly production error messages
-- [ ] Add consistent toast notifications
-- [ ] Make public booking excellent on mobile
-- [ ] Make admin booking table usable on mobile
-- [ ] Add focus states, labels, semantic controls, and accessible dialogs
-- [ ] Review security headers, CORS, body limits, cookies, and error handling
+16. Activity log
+17. Loading/error states
+18. Responsive design
+19. Accessibility
+20. Security review
 
-## Phase 8 - Engineering Quality and Deployment
+Acceptance checklist:
 
-- [ ] Add integration tests for auth and authorization
-- [ ] Add scheduling conflict tests
-- [ ] Add public booking transaction tests
-- [ ] Add status workflow tests
-- [ ] Add dashboard metric tests where practical
-- [ ] Run typecheck, lint, tests, and production build
-- [ ] Configure Vercel deployment
-- [ ] Capture real production screenshot
-- [ ] Update README with live demo and screenshot
+- [ ] Booking activity history is visible in the booking detail view
+- [ ] Loading states exist for dashboard, bookings, status updates, staff assignment, and booking creation
+- [ ] Empty states exist for no bookings today, no assigned jobs, and no search results
+- [ ] Friendly production errors are shown instead of raw backend errors
+- [ ] Toast notifications are consistent
+- [ ] Duplicate submissions are disabled while requests are running
+- [ ] Public booking page works well on phone widths
+- [ ] Admin tables adapt to mobile cards or readable layouts
+- [ ] Forms have labels, visible focus states, accessible dialogs, and semantic buttons
+- [ ] Security headers, CORS, cookies, rate limits, body limits, CSRF approach, and error handling are reviewed
+
+## Phase 5 - Engineering Quality
+
+21. Integration tests
+22. Typecheck
+23. Lint
+24. Production build
+25. README
+26. Production screenshot
+27. Deploy
+
+Acceptance checklist:
+
+- [ ] Auth tests verify unauthenticated admin routes return 401
+- [ ] Authorization tests verify staff cannot access admin endpoints
+- [ ] Record-isolation tests verify Staff A and Staff B cannot operate each other's jobs
+- [ ] Booking validation tests reject past dates
+- [ ] Status workflow tests reject invalid transitions
+- [ ] Scheduling tests cover overlapping and non-overlapping assignment
+- [ ] Public booking test verifies Customer, Booking, and Activity creation
+- [ ] Dashboard metric tests verify database-derived values where practical
+- [ ] Frontend typecheck, lint, tests, and build pass
+- [ ] Backend typecheck, lint, and tests pass
+- [ ] Vercel deployment is configured
+- [ ] A real production screenshot is captured
+- [ ] README contains final Live Demo, Repository, and screenshot
 
