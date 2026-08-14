@@ -55,6 +55,7 @@ DATABASE_URL=mysql://USER:PASSWORD@HOST:PORT/DATABASE
 JWT_SECRET=replace_with_a_long_random_secret_at_least_32_chars
 CLIENT_ORIGIN=https://your-vercel-domain.vercel.app
 VITE_API_URL=/api
+VITE_BUSINESS_TIMEZONE=Asia/Jakarta
 COOKIE_SECURE=true
 COOKIE_SAMESITE=lax
 BUSINESS_TIMEZONE=Asia/Jakarta
@@ -70,6 +71,7 @@ Notes:
 
 - `JWT_SECRET` must not use the local demo value.
 - `VITE_API_URL` must be lowercase `/api`.
+- `BUSINESS_TIMEZONE` and `VITE_BUSINESS_TIMEZONE` should match so backend validation and frontend date controls use the same business day.
 - `COOKIE_SAMESITE=lax` is correct when the frontend and API are deployed under the same Vercel domain.
 - Use `COOKIE_SAMESITE=none` only if the API is deployed on a separate domain, and keep `COOKIE_SECURE=true`.
 - Vercel also provides deployment URL variables automatically; the backend allowlist reads them when available.

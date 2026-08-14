@@ -1,14 +1,15 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { addBusinessDays, todayDateString } from "../src/utils/time.js";
 
 const prisma = new PrismaClient();
 
 function todayDate() {
-  return new Date(new Date().toISOString().slice(0, 10));
+  return new Date(`${todayDateString()}T00:00:00.000Z`);
 }
 
 function tomorrowDate() {
-  return new Date(Date.now() + 24 * 60 * 60 * 1000);
+  return new Date(`${addBusinessDays(todayDateString(), 1)}T00:00:00.000Z`);
 }
 
 async function upsertCustomer(data: { name: string; email: string; phone: string; address: string }) {
@@ -223,6 +224,20 @@ async function main() {
       });
     }
   }
+
+  const existingNumbers = await prisma.booking.findMany({ select: { bookingNumber: true } });
+  const highestBookingNumber = Math.max(
+    1000,
+    ...existingNumbers
+      .map((booking) => Number(booking.bookingNumber.replace("SF-", "")))
+      .filter((value) => Number.isFinite(value)),
+  );
+
+  await prisma.bookingCounter.upsert({
+    where: { name: "public" },
+    update: { nextNumber: highestBookingNumber + 1 },
+    create: { name: "public", nextNumber: highestBookingNumber + 1 },
+  });
 }
 
 main()

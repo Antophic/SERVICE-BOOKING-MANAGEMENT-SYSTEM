@@ -1,5 +1,5 @@
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app.js";
 import { MemoryStore } from "../src/repositories/memoryStore.js";
 import { todayDateString } from "../src/utils/time.js";
@@ -24,6 +24,10 @@ async function loginAs(agent: request.Agent, email: string) {
 function tomorrowDateString() {
   return todayDateString(new Date(Date.now() + 24 * 60 * 60 * 1000));
 }
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("ServiceFlow API", () => {
   it("returns 401 for unauthenticated admin routes", async () => {
@@ -80,6 +84,57 @@ describe("ServiceFlow API", () => {
         address: "1 Old Road",
       })
       .expect(422);
+  });
+
+  it("uses the business timezone for dashboard today around a UTC boundary", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-08-13T18:30:00.000Z"));
+
+    const { agent } = createTestAgent();
+    await loginAs(agent, "admin@serviceflow.test");
+
+    const response = await agent.get("/api/dashboard").expect(200);
+
+    expect(response.body.metrics).toMatchObject({
+      todaysBookings: 3,
+      pendingRequests: 1,
+      jobsInProgress: 1,
+      completedToday: 1,
+      todaysRevenue: 320,
+    });
+  });
+
+  it("validates past public bookings in the business timezone", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-08-13T18:30:00.000Z"));
+
+    const { agent } = createTestAgent();
+
+    await agent
+      .post("/api/public/bookings")
+      .send({
+        name: "Boundary Past",
+        email: "boundary-past@example.test",
+        phone: "+1 555 0401",
+        serviceId: "service-standard",
+        scheduledDate: "2026-08-14",
+        scheduledStartTime: "01:00",
+        address: "1 Boundary Road",
+      })
+      .expect(422);
+
+    await agent
+      .post("/api/public/bookings")
+      .send({
+        name: "Boundary Future",
+        email: "boundary-future@example.test",
+        phone: "+1 555 0402",
+        serviceId: "service-standard",
+        scheduledDate: "2026-08-14",
+        scheduledStartTime: "02:00",
+        address: "2 Boundary Road",
+      })
+      .expect(201);
   });
 
   it("rejects invalid status transitions", async () => {
@@ -145,6 +200,89 @@ describe("ServiceFlow API", () => {
       .set("x-csrf-token", csrfToken)
       .send({ staffId: "staff-james" })
       .expect(200);
+  });
+
+  it("rejects conflicting reschedules and allows touching time boundaries", async () => {
+    const { agent } = createTestAgent();
+    const csrfToken = await loginAs(agent, "admin@serviceflow.test");
+    const tomorrow = tomorrowDateString();
+
+    const firstBooking = await agent
+      .post("/api/public/bookings")
+      .send({
+        name: "First Reschedule Customer",
+        email: "first-reschedule@example.test",
+        phone: "+1 555 0501",
+        serviceId: "service-standard",
+        scheduledDate: tomorrow,
+        scheduledStartTime: "10:00",
+        address: "10 Reschedule Street",
+      })
+      .expect(201);
+
+    await agent
+      .patch(`/api/bookings/${firstBooking.body.booking.id}/assign`)
+      .set("x-csrf-token", csrfToken)
+      .send({ staffId: "staff-james" })
+      .expect(200);
+
+    const secondBooking = await agent
+      .post("/api/public/bookings")
+      .send({
+        name: "Second Reschedule Customer",
+        email: "second-reschedule@example.test",
+        phone: "+1 555 0502",
+        serviceId: "service-standard",
+        scheduledDate: tomorrow,
+        scheduledStartTime: "13:00",
+        address: "13 Reschedule Street",
+      })
+      .expect(201);
+
+    await agent
+      .patch(`/api/bookings/${secondBooking.body.booking.id}/assign`)
+      .set("x-csrf-token", csrfToken)
+      .send({ staffId: "staff-james" })
+      .expect(200);
+
+    const conflictResponse = await agent
+      .patch(`/api/bookings/${secondBooking.body.booking.id}`)
+      .set("x-csrf-token", csrfToken)
+      .send({ scheduledStartTime: "11:00" })
+      .expect(409);
+
+    expect(conflictResponse.body.message).toBe("James Wilson already has a booking during this time.");
+
+    await agent
+      .patch(`/api/bookings/${secondBooking.body.booking.id}`)
+      .set("x-csrf-token", csrfToken)
+      .send({ scheduledStartTime: "12:00" })
+      .expect(200);
+  });
+
+  it("keeps generated public booking numbers unique and human-readable", async () => {
+    const { agent } = createTestAgent();
+    const tomorrow = tomorrowDateString();
+
+    const responses = await Promise.all(
+      Array.from({ length: 5 }, (_, index) =>
+        agent.post("/api/public/bookings").send({
+          name: `Rapid Customer ${index}`,
+          email: `rapid-${index}@example.test`,
+          phone: `+1 555 06${String(index).padStart(2, "0")}`,
+          serviceId: "service-standard",
+          scheduledDate: tomorrow,
+          scheduledStartTime: "16:00",
+          address: `${index} Rapid Avenue`,
+        }),
+      ),
+    );
+
+    responses.forEach((response) => expect(response.status).toBe(201));
+    const bookingNumbers = responses.map((response) => response.body.booking.bookingNumber);
+
+    expect(new Set(bookingNumbers).size).toBe(bookingNumbers.length);
+    expect(bookingNumbers.every((bookingNumber) => /^SF-\d+$/.test(bookingNumber))).toBe(true);
   });
 
   it("creates customer, booking, and activity for a valid public booking", async () => {

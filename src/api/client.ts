@@ -121,6 +121,22 @@ export const api = {
 
   getBooking: (id: string) => request<{ booking: BookingDetail }>(`/bookings/${id}`),
 
+  updateBooking: (
+    id: string,
+    input: {
+      serviceId?: string;
+      scheduledDate?: string;
+      scheduledStartTime?: string;
+      address?: string;
+      specialInstructions?: string | null;
+      quotedPrice?: number;
+    },
+  ) =>
+    request<{ message: string; booking: BookingDetail }>(`/bookings/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    }),
+
   assignStaff: (id: string, staffId: string) =>
     request<{ message: string; booking: BookingDetail }>(`/bookings/${id}/assign`, {
       method: "PATCH",

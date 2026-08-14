@@ -18,6 +18,7 @@
     "lint:all": "npm run lint && npm run lint:api",
     "test": "vitest run",
     "test:api": "npm --prefix backend test",
+    "test:integration": "npm --prefix backend run test:integration",
     "test:all": "npm test && npm run test:api",
     "preview": "vite preview --host 127.0.0.1"
   },

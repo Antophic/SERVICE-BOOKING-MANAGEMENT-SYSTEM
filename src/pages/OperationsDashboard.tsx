@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarCheck, CircleDollarSign, Clock3, ListChecks, RefreshCw, TimerReset } from "lucide-react";
+import { CalendarCheck, CircleDollarSign, Clock3, ListChecks, Pencil, RefreshCw, TimerReset } from "lucide-react";
 import { api, ApiClientError } from "../api/client";
 import { AuthPanel } from "../components/AuthPanel";
 import { MetricCard } from "../components/MetricCard";
@@ -20,6 +20,15 @@ import { formatDate, todayInputValue } from "../utils/date";
 type OperationsDashboardProps = {
   user: PublicUser | null;
   onLogin: (user: PublicUser) => void;
+};
+
+type EditBookingForm = {
+  serviceId: string;
+  scheduledDate: string;
+  scheduledStartTime: string;
+  address: string;
+  specialInstructions: string;
+  quotedPrice: string;
 };
 
 const emptyMetrics: DashboardMetrics = {
@@ -47,6 +56,10 @@ export function OperationsDashboard({ user, onLogin }: OperationsDashboardProps)
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState<EditBookingForm | null>(null);
+  const [editErrors, setEditErrors] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const debouncedSearch = useDebouncedValue(search, 350);
@@ -109,6 +122,87 @@ export function OperationsDashboard({ user, onLogin }: OperationsDashboardProps)
 
   function resetPage() {
     setPage(1);
+  }
+
+  function openEditForm(booking: BookingDetail) {
+    setEditForm({
+      serviceId: booking.serviceId,
+      scheduledDate: booking.scheduledDate,
+      scheduledStartTime: booking.scheduledStartTime,
+      address: booking.address,
+      specialInstructions: booking.specialInstructions ?? "",
+      quotedPrice: String(booking.quotedPrice),
+    });
+    setEditErrors([]);
+    setEditOpen(true);
+  }
+
+  function updateEditField(field: keyof EditBookingForm, value: string) {
+    setEditForm((current) => (current ? { ...current, [field]: value } : current));
+  }
+
+  function updateEditService(serviceId: string) {
+    const selectedService = services.find((service) => service.id === serviceId);
+    setEditForm((current) =>
+      current
+        ? {
+            ...current,
+            serviceId,
+            quotedPrice: selectedService ? String(selectedService.basePrice) : current.quotedPrice,
+          }
+        : current,
+    );
+  }
+
+  function validateEditForm(form: EditBookingForm) {
+    const issues: string[] = [];
+    const quotedPrice = Number(form.quotedPrice);
+
+    if (!form.serviceId) issues.push("Select a service.");
+    if (!form.scheduledDate) issues.push("Select a service date.");
+    if (!form.scheduledStartTime) issues.push("Select a service time.");
+    if (form.address.trim().length < 5) issues.push("Service address must be at least 5 characters.");
+    if (!Number.isFinite(quotedPrice) || quotedPrice < 0) issues.push("Quoted price must be zero or greater.");
+
+    return issues;
+  }
+
+  async function handleSaveEdit() {
+    if (!selectedBooking || !editForm) return;
+
+    const issues = validateEditForm(editForm);
+    if (issues.length) {
+      setEditErrors(issues);
+      return;
+    }
+
+    setSavingEdit(true);
+    setEditErrors([]);
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await api.updateBooking(selectedBooking.id, {
+        serviceId: editForm.serviceId,
+        scheduledDate: editForm.scheduledDate,
+        scheduledStartTime: editForm.scheduledStartTime,
+        address: editForm.address.trim(),
+        specialInstructions: editForm.specialInstructions.trim() || null,
+        quotedPrice: Number(editForm.quotedPrice),
+      });
+      setSelectedBooking(response.booking);
+      setEditOpen(false);
+      setMessage("Booking details updated.");
+      await loadAdminData();
+    } catch (caught) {
+      if (caught instanceof ApiClientError && caught.issues?.length) {
+        setEditErrors(caught.issues.map((issue) => issue.message));
+      } else {
+        setEditErrors([caught instanceof Error ? caught.message : "Unable to update booking details."]);
+      }
+    } finally {
+      setSavingEdit(false);
+    }
   }
 
   async function handleAssign(bookingId: string, nextStaffId: string) {
@@ -272,12 +366,76 @@ export function OperationsDashboard({ user, onLogin }: OperationsDashboardProps)
                   <p className="eyebrow">Selected Booking</p>
                   <h2>{selectedBooking.bookingNumber}</h2>
                 </div>
-                <StatusBadge status={selectedBooking.status} />
+                <div className="detail-heading-actions">
+                  <StatusBadge status={selectedBooking.status} />
+                  <button className="ghost-button" type="button" onClick={() => openEditForm(selectedBooking)}>
+                    <Pencil size={15} aria-hidden="true" />
+                    Edit Booking
+                  </button>
+                </div>
               </div>
+
+              {editOpen && editForm && (
+                <div className="edit-booking-panel">
+                  <div className="panel-heading compact">
+                    <div>
+                      <h3>Edit Booking</h3>
+                      <p>Update details without changing status.</p>
+                    </div>
+                  </div>
+                  {editErrors.length > 0 && (
+                    <div className="form-error">
+                      {editErrors.map((issue) => (
+                        <span key={issue}>{issue}</span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="edit-booking-grid">
+                    <label>
+                      Service
+                      <select value={editForm.serviceId} onChange={(event) => updateEditService(event.target.value)}>
+                        {services.map((service) => (
+                          <option key={service.id} value={service.id}>
+                            {service.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Date
+                      <input type="date" value={editForm.scheduledDate} onChange={(event) => updateEditField("scheduledDate", event.target.value)} />
+                    </label>
+                    <label>
+                      Time
+                      <input type="time" value={editForm.scheduledStartTime} onChange={(event) => updateEditField("scheduledStartTime", event.target.value)} />
+                    </label>
+                    <label>
+                      Quoted Price
+                      <input min="0" step="0.01" type="number" value={editForm.quotedPrice} onChange={(event) => updateEditField("quotedPrice", event.target.value)} />
+                    </label>
+                    <label>
+                      Address
+                      <textarea value={editForm.address} onChange={(event) => updateEditField("address", event.target.value)} rows={3} />
+                    </label>
+                    <label>
+                      Special Instructions
+                      <textarea value={editForm.specialInstructions} onChange={(event) => updateEditField("specialInstructions", event.target.value)} rows={3} />
+                    </label>
+                  </div>
+                  <div className="edit-actions">
+                    <button className="primary-button" type="button" disabled={savingEdit} onClick={() => void handleSaveEdit()}>
+                      {savingEdit ? "Saving..." : "Save Changes"}
+                    </button>
+                    <button className="ghost-button" type="button" disabled={savingEdit} onClick={() => setEditOpen(false)}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="detail-list">
                 <div><span>Customer</span><strong>{selectedBooking.customer.name}</strong></div>
-                <div><span>Contact</span><strong>{selectedBooking.customer.phone} · {selectedBooking.customer.email}</strong></div>
+                <div><span>Contact</span><strong>{selectedBooking.customer.phone} - {selectedBooking.customer.email}</strong></div>
                 <div><span>Service</span><strong>{selectedBooking.service.name}</strong></div>
                 <div><span>Schedule</span><strong>{formatDate(selectedBooking.scheduledDate)}, {selectedBooking.scheduledStartTime}</strong></div>
                 <div><span>Quoted Price</span><strong>{currency.format(selectedBooking.quotedPrice)}</strong></div>

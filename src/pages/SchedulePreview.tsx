@@ -77,7 +77,7 @@ export function SchedulePreview({ user, onLogin }: SchedulePreviewProps) {
                 column.bookings.map((booking) => (
                   <div className="time-slot" key={booking.id}>
                     <strong>{booking.scheduledStartTime} - {booking.bookingNumber}</strong>
-                    <span>{booking.customerName} · {booking.serviceName}</span>
+                    <span>{booking.customerName} - {booking.serviceName}</span>
                     <StatusBadge status={booking.status} />
                   </div>
                 ))

@@ -2,11 +2,11 @@
 
 Booking & Job Management for Service Businesses
 
-[Live Demo](#) | [Repository](https://github.com/Antophic/SERVICE-BOOKING-MANAGEMENT-SYSTEM)
+[Live Demo](https://service-booking-management-system.vercel.app) | [Repository](https://github.com/Antophic/SERVICE-BOOKING-MANAGEMENT-SYSTEM)
 
 ServiceFlow is a full-stack booking and job management application for service businesses, featuring public booking intake, staff assignment, scheduling conflict detection, role-based dashboards, job status workflows, and database-backed operations.
 
-Production screenshot: pending until the application is deployed. The real dashboard screenshot must be saved as `public/serviceflow-dashboard.webp` and used here after deployment.
+Production screenshot: manual final step pending. Capture a real logged-in dashboard screenshot from the deployed app, save it as `public/serviceflow-dashboard.webp`, and add it below this section. Do not use a mock illustration.
 
 ## Problem
 
@@ -45,8 +45,10 @@ Booking Request
 - Staff login with assigned-job isolation
 - Operations Dashboard with database-backed metrics
 - Booking list with search, filters, and server-side pagination
-- Booking detail view with customer, service, assignment, instructions, and activity history
+- Booking detail view with customer, service, assignment, edit panel, instructions, and activity history
 - Staff assignment with backend scheduling conflict detection
+- Rescheduling conflict detection when assigned bookings are edited
+- Business-timezone-aware dashboard, schedule, and past-booking validation
 - Controlled booking status transitions
 - Simple daily or weekly schedule view
 - Booking activity audit trail
@@ -54,7 +56,8 @@ Booking Request
 - Mobile-friendly public booking page
 - Responsive admin and staff screens
 - Production-oriented security, validation, and error handling
-- Integration tests for core business rules
+- MemoryStore API tests for core business rules
+- Optional Prisma/MySQL integration tests for production persistence behavior
 
 ## Architecture
 
@@ -196,7 +199,7 @@ Asia/Jakarta
 
 ## Database Schema
 
-Planned relational models:
+Relational models:
 
 User:
 
@@ -255,6 +258,12 @@ BookingActivity:
 - description
 - createdAt
 
+BookingCounter:
+
+- name
+- nextNumber
+- updatedAt
+
 Relationships:
 
 ```text
@@ -286,7 +295,7 @@ Prices use USD and must be stored as numeric/Decimal values, never formatted str
 
 ## API
 
-Planned REST endpoints:
+REST endpoints:
 
 ```text
 POST   /api/public/bookings
@@ -436,29 +445,37 @@ Minimum automated tests:
 - unauthenticated admin routes return 401
 - staff cannot access admin-only endpoints
 - Staff A cannot access Staff B assigned job
-- past booking dates are rejected
+- past booking dates are rejected in the configured business timezone
 - invalid status transitions are rejected
 - overlapping staff assignment returns a conflict response
+- overlapping assigned-booking reschedules return a conflict response
 - valid public booking creates Customer, Booking, and BookingActivity
+- public booking numbers remain unique under rapid booking creation
 - dashboard metrics derive from database records where practical
+
+The default test suite uses the in-memory repository so it can run without MySQL:
+
+```bash
+npm run test:all
+```
+
+Prisma/MySQL integration tests are opt-in. Set a dedicated disposable test database URL whose database name or host includes `test` or `integration`, apply the migrations to that database first, then run:
+
+```bash
+DATABASE_URL=mysql://USER:PASSWORD@HOST:PORT/serviceflow_test npm --prefix backend run prisma:deploy
+DATABASE_URL_TEST=mysql://USER:PASSWORD@HOST:PORT/serviceflow_test npm run test:integration
+```
+
+The integration suite intentionally skips when `DATABASE_URL_TEST` is missing.
 
 Quality gates before completion:
 
-Frontend:
-
 ```bash
-npm run typecheck
-npm test
-npm run build
-```
-
-Backend:
-
-```bash
-cd backend
-npm run typecheck
-npm test
-npm run build
+npm run lint:all
+npm run typecheck:all
+npm run test:all
+npm run test:integration
+npm run build:all
 ```
 
 Do not suppress legitimate errors just to make commands pass.
@@ -475,6 +492,7 @@ Production requirements:
 - secure production environment variables
 - HTTP-only secure cookies
 - production CORS origin
+- matching backend and frontend business timezone variables
 - real screenshot saved to `public/serviceflow-dashboard.webp`
 - README updated with real Live Demo and Repository links
 
@@ -491,7 +509,7 @@ Current Vercel build flow:
 6. Seed fictional demo data
 ```
 
-Set `VITE_API_URL=/api` for production builds unless the API is deployed separately.
+Set `VITE_API_URL=/api`, `BUSINESS_TIMEZONE=Asia/Jakarta`, and `VITE_BUSINESS_TIMEZONE=Asia/Jakarta` for production builds unless the API is deployed separately.
 
 Full deployment instructions are in [`docs/VERCEL_DEPLOYMENT.md`](docs/VERCEL_DEPLOYMENT.md).
 

@@ -94,17 +94,10 @@ export class PrismaStore implements DataStore {
           },
         }));
 
-      const existingNumbers = await tx.booking.findMany({ select: { bookingNumber: true } });
-      const nextPublicNumber =
-        Math.max(
-          1000,
-          ...existingNumbers
-            .map((booking) => Number(booking.bookingNumber.replace("SF-", "")))
-            .filter((value) => Number.isFinite(value)),
-        ) + 1;
+      const bookingNumber = await this.allocateBookingNumber(tx);
       const created = await tx.booking.create({
         data: {
-          bookingNumber: `SF-${nextPublicNumber}`,
+          bookingNumber,
           customerId: customer.id,
           serviceId: service.id,
           scheduledDate: this.toDate(input.scheduledDate),
@@ -172,6 +165,12 @@ export class PrismaStore implements DataStore {
 
     const nextDate = input.scheduledDate ?? this.mapDate(existing.scheduledDate);
     const nextTime = input.scheduledStartTime ?? existing.scheduledStartTime;
+    const scheduleSensitiveEdit =
+      input.scheduledDate !== undefined ||
+      input.scheduledStartTime !== undefined ||
+      input.estimatedDurationMinutes !== undefined ||
+      input.serviceId !== undefined;
+
     if (input.scheduledDate || input.scheduledStartTime) {
       if (isPastBookingDateTime(nextDate, nextTime)) {
         throw new ApiError(422, "Bookings cannot be scheduled in the past.");
@@ -186,6 +185,23 @@ export class PrismaStore implements DataStore {
       throw new ApiError(422, "Select a valid service.");
     }
 
+    const nextDuration = input.estimatedDurationMinutes ?? service?.estimatedDurationMinutes ?? existing.estimatedDurationMinutes;
+
+    if (existing.assignedStaffId && activeConflictStatuses.includes(existing.status as BookingStatus) && scheduleSensitiveEdit) {
+      const conflict = await this.findStaffBookingConflict({
+        staffId: existing.assignedStaffId,
+        bookingIdToIgnore: existing.id,
+        scheduledDate: nextDate,
+        startTime: nextTime,
+        durationMinutes: nextDuration,
+      });
+
+      if (conflict) {
+        const staff = await this.prisma.user.findUnique({ where: { id: existing.assignedStaffId } });
+        throw new ApiError(409, `${staff?.name ?? "Selected staff"} already has a booking during this time.`);
+      }
+    }
+
     await this.prisma.$transaction([
       this.prisma.booking.update({
         where: { id },
@@ -193,8 +209,7 @@ export class PrismaStore implements DataStore {
           serviceId: input.serviceId,
           scheduledDate: input.scheduledDate ? this.toDate(input.scheduledDate) : undefined,
           scheduledStartTime: input.scheduledStartTime,
-          estimatedDurationMinutes:
-            input.estimatedDurationMinutes ?? service?.estimatedDurationMinutes ?? undefined,
+          estimatedDurationMinutes: input.estimatedDurationMinutes ?? service?.estimatedDurationMinutes ?? undefined,
           address: input.address,
           specialInstructions: input.specialInstructions,
           quotedPrice: input.quotedPrice ?? service?.basePrice ?? undefined,
@@ -222,23 +237,13 @@ export class PrismaStore implements DataStore {
     const staff = await this.prisma.user.findFirst({ where: { id: staffId, role: "STAFF" } });
     if (!staff) throw new ApiError(422, "Select a valid staff member.");
 
-    const sameDayBookings = await this.prisma.booking.findMany({
-      where: {
-        id: { not: booking.id },
-        assignedStaffId: staff.id,
-        scheduledDate: booking.scheduledDate,
-        status: { in: activeConflictStatuses },
-      },
+    const conflict = await this.findStaffBookingConflict({
+      staffId: staff.id,
+      bookingIdToIgnore: booking.id,
+      scheduledDate: this.mapDate(booking.scheduledDate),
+      startTime: booking.scheduledStartTime,
+      durationMinutes: booking.estimatedDurationMinutes,
     });
-
-    const conflict = sameDayBookings.find((candidate) =>
-      bookingsOverlap(
-        candidate.scheduledStartTime,
-        candidate.estimatedDurationMinutes,
-        booking.scheduledStartTime,
-        booking.estimatedDurationMinutes,
-      ),
-    );
 
     if (conflict) {
       throw new ApiError(409, `${staff.name} already has a booking during this time.`);
@@ -410,6 +415,49 @@ export class PrismaStore implements DataStore {
     }
 
     return where;
+  }
+
+  private async allocateBookingNumber(tx: any) {
+    const existingNumbers = await tx.booking.findMany({ select: { bookingNumber: true } });
+    const highestBookingNumber = Math.max(
+      1000,
+      ...existingNumbers
+        .map((booking: { bookingNumber: string }) => Number(booking.bookingNumber.replace("SF-", "")))
+        .filter((value: number) => Number.isFinite(value)),
+    );
+    const counter = await tx.bookingCounter.upsert({
+      where: { name: "public" },
+      create: { name: "public", nextNumber: highestBookingNumber + 2 },
+      update: { nextNumber: { increment: 1 } },
+    });
+
+    return `SF-${counter.nextNumber - 1}`;
+  }
+
+  private async findStaffBookingConflict(input: {
+    staffId: string;
+    bookingIdToIgnore: string;
+    scheduledDate: string;
+    startTime: string;
+    durationMinutes: number;
+  }) {
+    const sameDayBookings = await this.prisma.booking.findMany({
+      where: {
+        id: { not: input.bookingIdToIgnore },
+        assignedStaffId: input.staffId,
+        scheduledDate: this.toDate(input.scheduledDate),
+        status: { in: activeConflictStatuses },
+      },
+    });
+
+    return sameDayBookings.find((candidate) =>
+      bookingsOverlap(
+        candidate.scheduledStartTime,
+        candidate.estimatedDurationMinutes,
+        input.startTime,
+        input.durationMinutes,
+      ),
+    );
   }
 
   private async staffAvailability(staffId: string): Promise<"Available" | "Assigned" | "In Field"> {

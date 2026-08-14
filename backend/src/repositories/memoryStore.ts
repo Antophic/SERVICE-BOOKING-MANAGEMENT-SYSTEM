@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { ApiError } from "../utils/ApiError.js";
-import { bookingsOverlap, isPastBookingDateTime, sortBySchedule, todayDateString } from "../utils/time.js";
+import { addBusinessDays, bookingsOverlap, isPastBookingDateTime, sortBySchedule, todayDateString } from "../utils/time.js";
 import { toPublicUser } from "../utils/publicUser.js";
 import type {
   Booking,
@@ -46,6 +46,7 @@ export class MemoryStore implements DataStore {
   private services: Service[] = [];
   private bookings: Booking[] = [];
   private activities: BookingActivity[] = [];
+  private bookingNumberCounter = 1001;
 
   constructor() {
     this.seed();
@@ -140,33 +141,55 @@ export class MemoryStore implements DataStore {
 
   async updateBooking(id: string, input: UpdateBookingInput, actor: Actor) {
     const booking = this.requireBooking(id);
+    const scheduleSensitiveEdit =
+      input.scheduledDate !== undefined ||
+      input.scheduledStartTime !== undefined ||
+      input.estimatedDurationMinutes !== undefined ||
+      input.serviceId !== undefined;
+    const nextDate = input.scheduledDate ?? booking.scheduledDate;
+    const nextTime = input.scheduledStartTime ?? booking.scheduledStartTime;
 
     if (input.scheduledDate || input.scheduledStartTime) {
-      const targetDate = input.scheduledDate ?? booking.scheduledDate;
-      const targetTime = input.scheduledStartTime ?? booking.scheduledStartTime;
-      if (isPastBookingDateTime(targetDate, targetTime)) {
+      if (isPastBookingDateTime(nextDate, nextTime)) {
         throw new ApiError(422, "Bookings cannot be scheduled in the past.");
       }
     }
 
+    const service = input.serviceId
+      ? this.services.find((candidate) => candidate.id === input.serviceId && candidate.active)
+      : null;
+
     if (input.serviceId) {
-      const service = this.services.find((candidate) => candidate.id === input.serviceId && candidate.active);
       if (!service) {
         throw new ApiError(422, "Select a valid service.");
       }
-      booking.serviceId = service.id;
-      booking.estimatedDurationMinutes = input.estimatedDurationMinutes ?? service.estimatedDurationMinutes;
-      booking.quotedPrice = input.quotedPrice ?? service.basePrice;
+    }
+
+    const nextDuration = input.estimatedDurationMinutes ?? service?.estimatedDurationMinutes ?? booking.estimatedDurationMinutes;
+
+    if (booking.assignedStaffId && activeConflictStatuses.includes(booking.status) && scheduleSensitiveEdit) {
+      const conflict = this.findStaffBookingConflict({
+        staffId: booking.assignedStaffId,
+        bookingIdToIgnore: booking.id,
+        scheduledDate: nextDate,
+        startTime: nextTime,
+        durationMinutes: nextDuration,
+      });
+
+      if (conflict) {
+        throw new ApiError(409, `${this.requireUser(booking.assignedStaffId).name} already has a booking during this time.`);
+      }
     }
 
     Object.assign(booking, {
+      serviceId: service?.id ?? booking.serviceId,
       scheduledDate: input.scheduledDate ?? booking.scheduledDate,
       scheduledStartTime: input.scheduledStartTime ?? booking.scheduledStartTime,
-      estimatedDurationMinutes: input.estimatedDurationMinutes ?? booking.estimatedDurationMinutes,
+      estimatedDurationMinutes: nextDuration,
       address: input.address ?? booking.address,
       specialInstructions:
         input.specialInstructions === undefined ? booking.specialInstructions : input.specialInstructions,
-      quotedPrice: input.quotedPrice ?? booking.quotedPrice,
+      quotedPrice: input.quotedPrice ?? service?.basePrice ?? booking.quotedPrice,
       updatedAt: new Date().toISOString(),
     });
 
@@ -182,19 +205,13 @@ export class MemoryStore implements DataStore {
       throw new ApiError(422, "Select a valid staff member.");
     }
 
-    const conflict = this.bookings.find(
-      (candidate) =>
-        candidate.id !== booking.id &&
-        candidate.assignedStaffId === staff.id &&
-        candidate.scheduledDate === booking.scheduledDate &&
-        activeConflictStatuses.includes(candidate.status) &&
-        bookingsOverlap(
-          candidate.scheduledStartTime,
-          candidate.estimatedDurationMinutes,
-          booking.scheduledStartTime,
-          booking.estimatedDurationMinutes,
-        ),
-    );
+    const conflict = this.findStaffBookingConflict({
+      staffId: staff.id,
+      bookingIdToIgnore: booking.id,
+      scheduledDate: booking.scheduledDate,
+      startTime: booking.scheduledStartTime,
+      durationMinutes: booking.estimatedDurationMinutes,
+    });
 
     if (conflict) {
       throw new ApiError(409, `${staff.name} already has a booking during this time.`);
@@ -303,7 +320,7 @@ export class MemoryStore implements DataStore {
     const now = new Date().toISOString();
     const passwordHash = bcrypt.hashSync("Password123!", 12);
     const today = todayDateString();
-    const tomorrow = todayDateString(new Date(Date.now() + 24 * 60 * 60 * 1000));
+    const tomorrow = addBusinessDays(today, 1);
 
     this.users = [
       { id: "user-admin", name: "Avery Morgan", email: "admin@serviceflow.test", passwordHash, role: "ADMIN", createdAt: now, updatedAt: now },
@@ -378,6 +395,7 @@ export class MemoryStore implements DataStore {
         this.addActivity(booking.id, "user-admin", "STATUS_CHANGED", `Booking status changed to ${booking.status}.`);
       }
     });
+    this.bookingNumberCounter = this.nextBookingNumericValue();
   }
 
   private booking(
@@ -447,10 +465,38 @@ export class MemoryStore implements DataStore {
   }
 
   private nextBookingNumber() {
+    const nextNumber = this.bookingNumberCounter;
+    this.bookingNumberCounter += 1;
+    return `SF-${nextNumber}`;
+  }
+
+  private nextBookingNumericValue() {
     const numbers = this.bookings
       .map((booking) => Number(booking.bookingNumber.replace("SF-", "")))
       .filter((value) => Number.isFinite(value));
-    return `SF-${Math.max(1000, ...numbers) + 1}`;
+    return Math.max(1000, ...numbers) + 1;
+  }
+
+  private findStaffBookingConflict(input: {
+    staffId: string;
+    bookingIdToIgnore: string;
+    scheduledDate: string;
+    startTime: string;
+    durationMinutes: number;
+  }) {
+    return this.bookings.find(
+      (candidate) =>
+        candidate.id !== input.bookingIdToIgnore &&
+        candidate.assignedStaffId === input.staffId &&
+        candidate.scheduledDate === input.scheduledDate &&
+        activeConflictStatuses.includes(candidate.status) &&
+        bookingsOverlap(
+          candidate.scheduledStartTime,
+          candidate.estimatedDurationMinutes,
+          input.startTime,
+          input.durationMinutes,
+        ),
+    );
   }
 
   private staffAvailability(staffId: string): "Available" | "Assigned" | "In Field" {

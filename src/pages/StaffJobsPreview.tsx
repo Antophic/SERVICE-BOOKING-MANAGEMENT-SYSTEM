@@ -4,7 +4,7 @@ import { api, ApiClientError } from "../api/client";
 import { AuthPanel } from "../components/AuthPanel";
 import { StatusBadge } from "../components/StatusBadge";
 import type { BookingDetail, BookingStatus, PublicUser } from "../types/domain";
-import { formatDate, isToday } from "../utils/date";
+import { formatDate, isFutureDate, isToday } from "../utils/date";
 
 type StaffJobsPreviewProps = {
   user: PublicUser | null;
@@ -20,8 +20,9 @@ export function StaffJobsPreview({ user, onLogin }: StaffJobsPreviewProps) {
   const [error, setError] = useState("");
   const canUseStaff = user?.role === "STAFF";
 
-  const todaysJobs = useMemo(() => jobs.filter((job) => isToday(job.scheduledDate)), [jobs]);
-  const upcomingJobs = useMemo(() => jobs.filter((job) => !isToday(job.scheduledDate)), [jobs]);
+  const activeJobs = useMemo(() => jobs.filter((job) => job.status !== "CANCELLED"), [jobs]);
+  const todaysJobs = useMemo(() => activeJobs.filter((job) => isToday(job.scheduledDate)), [activeJobs]);
+  const upcomingJobs = useMemo(() => activeJobs.filter((job) => isFutureDate(job.scheduledDate)), [activeJobs]);
 
   useEffect(() => {
     if (!canUseStaff) return;
@@ -34,12 +35,15 @@ export function StaffJobsPreview({ user, onLogin }: StaffJobsPreviewProps) {
 
     try {
       const response = await api.listStaffJobs();
+      const visibleJobs = response.bookings.filter(
+        (job) => job.status !== "CANCELLED" && (isToday(job.scheduledDate) || isFutureDate(job.scheduledDate)),
+      );
       setJobs(response.bookings);
       setSelectedJob((current) => {
-        if (current && response.bookings.some((job) => job.id === current.id)) {
-          return response.bookings.find((job) => job.id === current.id) ?? current;
+        if (current && visibleJobs.some((job) => job.id === current.id)) {
+          return visibleJobs.find((job) => job.id === current.id) ?? current;
         }
-        return response.bookings[0] ?? null;
+        return visibleJobs[0] ?? null;
       });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to load assigned jobs.");

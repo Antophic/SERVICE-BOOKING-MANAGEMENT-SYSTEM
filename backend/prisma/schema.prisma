@@ -117,3 +117,9 @@ model BookingActivity {
   @@index([userId])
   @@index([createdAt])
 }
+
+model BookingCounter {
+  name       String   @id
+  nextNumber Int
+  updatedAt  DateTime @updatedAt
+}

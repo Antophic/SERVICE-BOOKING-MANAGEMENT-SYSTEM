@@ -515,6 +515,47 @@ tbody tr:hover,
   gap: 12px;
 }
 
+.detail-heading-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.edit-booking-panel {
+  display: grid;
+  gap: 13px;
+  margin-bottom: 18px;
+  border: 1px solid #edf0f3;
+  border-radius: 8px;
+  background: #fafbfc;
+  padding: 14px;
+}
+
+.edit-booking-panel h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 17px;
+}
+
+.edit-booking-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.form-error span {
+  display: block;
+}
+
 .detail-list div {
   display: grid;
   gap: 3px;
@@ -854,6 +895,11 @@ label:has(textarea) {
     display: grid;
   }
 
+  .detail-heading-actions,
+  .edit-actions {
+    justify-content: flex-start;
+  }
+
   .filter-row {
     display: grid;
   }
@@ -863,6 +909,10 @@ label:has(textarea) {
   }
 
   fieldset {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-booking-grid {
     grid-template-columns: 1fr;
   }
 
