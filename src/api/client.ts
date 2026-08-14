@@ -9,8 +9,17 @@ import type {
   StaffMember,
 } from "../types/domain";
 
-const API_URL =
-  import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "/api" : "http://127.0.0.1:4000/api");
+function apiUrlFromEnv(value: string | undefined) {
+  if (!value) return import.meta.env.PROD ? "/api" : "http://127.0.0.1:4000/api";
+
+  const trimmed = value.trim().replace(/\/$/, "");
+  if (trimmed.toLowerCase() === "api") return "/api";
+  if (trimmed.toLowerCase().startsWith("/api")) return trimmed.replace(/^\/api/i, "/api");
+
+  return trimmed;
+}
+
+const API_URL = apiUrlFromEnv(import.meta.env.VITE_API_URL);
 let csrfToken: string | null = null;
 
 type RequestOptions = RequestInit & {

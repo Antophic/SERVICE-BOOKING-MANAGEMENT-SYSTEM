@@ -69,6 +69,7 @@ ADDITIONAL_CORS_ORIGINS=https://your-custom-domain.com,https://another-preview-d
 Notes:
 
 - `JWT_SECRET` must not use the local demo value.
+- `VITE_API_URL` must be lowercase `/api`.
 - `COOKIE_SAMESITE=lax` is correct when the frontend and API are deployed under the same Vercel domain.
 - Use `COOKIE_SAMESITE=none` only if the API is deployed on a separate domain, and keep `COOKIE_SECURE=true`.
 - Vercel also provides deployment URL variables automatically; the backend allowlist reads them when available.
