@@ -6,7 +6,21 @@ import type { Actor } from "../src/repositories/types.js";
 import { addBusinessDays, todayDateString } from "../src/utils/time.js";
 
 const databaseUrlTest = process.env.DATABASE_URL_TEST;
-const canRunIntegration = Boolean(databaseUrlTest && /(test|integration)/i.test(databaseUrlTest));
+const safeDatabasePattern = /(test|integration)/i;
+
+function isSafeIntegrationDatabaseUrl(value?: string) {
+  if (!value) return false;
+
+  try {
+    const url = new URL(value);
+    const databaseName = decodeURIComponent(url.pathname.replace(/^\/+/, ""));
+    return safeDatabasePattern.test(url.hostname) || safeDatabasePattern.test(databaseName);
+  } catch {
+    return false;
+  }
+}
+
+const canRunIntegration = isSafeIntegrationDatabaseUrl(databaseUrlTest);
 const describeIntegration = canRunIntegration ? describe : describe.skip;
 
 let prisma: PrismaClient;
@@ -127,8 +141,20 @@ async function createDashboardBooking(input: {
 }
 
 if (databaseUrlTest && !canRunIntegration) {
-  console.warn("Skipping Prisma integration tests: DATABASE_URL_TEST must include 'test' or 'integration'.");
+  console.warn(
+    "Skipping Prisma integration tests: DATABASE_URL_TEST hostname or database name must include 'test' or 'integration'.",
+  );
 }
+
+describe("Prisma integration database safety", () => {
+  it("only trusts the hostname or database name, never username or password", () => {
+    expect(isSafeIntegrationDatabaseUrl("mysql://testuser:password@production-server.com/serviceflow")).toBe(false);
+    expect(isSafeIntegrationDatabaseUrl("mysql://user:integrationpass@production-server.com/serviceflow")).toBe(false);
+    expect(isSafeIntegrationDatabaseUrl("mysql://user:password@mysql-test.example.com/serviceflow")).toBe(true);
+    expect(isSafeIntegrationDatabaseUrl("mysql://user:password@production-server.com/serviceflow_test")).toBe(true);
+    expect(isSafeIntegrationDatabaseUrl("not-a-url")).toBe(false);
+  });
+});
 
 describeIntegration("PrismaStore integration", () => {
   beforeAll(async () => {

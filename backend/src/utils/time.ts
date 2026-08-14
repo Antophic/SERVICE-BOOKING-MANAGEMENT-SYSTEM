@@ -35,7 +35,7 @@ function partsInTimeZone(date: Date, timeZone: string) {
   };
 }
 
-function validateDateAndTime(date: string, time = "00:00") {
+function parseDateAndTime(date: string, time = "00:00") {
   const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
   const timeMatch = /^(\d{2}):(\d{2})$/.exec(time);
 
@@ -50,6 +50,24 @@ function validateDateAndTime(date: string, time = "00:00") {
   if (month < 1 || month > 12 || day < 1 || day > 31 || hour > 23 || minute > 59) return null;
 
   return { year, month, day, hour, minute };
+}
+
+export function isValidCalendarDate(date: string) {
+  const parsed = parseDateAndTime(date);
+  if (!parsed) return false;
+
+  const normalized = new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day));
+  return (
+    normalized.getUTCFullYear() === parsed.year &&
+    normalized.getUTCMonth() === parsed.month - 1 &&
+    normalized.getUTCDate() === parsed.day
+  );
+}
+
+function validateDateAndTime(date: string, time = "00:00") {
+  const parsed = parseDateAndTime(date, time);
+  if (!parsed || !isValidCalendarDate(date)) return null;
+  return parsed;
 }
 
 function timeZoneOffsetMs(timeZone: string, instant: Date) {

@@ -86,6 +86,32 @@ describe("ServiceFlow API", () => {
       .expect(422);
   });
 
+  it("rejects impossible public booking calendar dates", async () => {
+    const { agent } = createTestAgent();
+
+    const response = await agent
+      .post("/api/public/bookings")
+      .send({
+        name: "Impossible Date Customer",
+        email: "impossible-date@example.test",
+        phone: "+1 555 0301",
+        serviceId: "service-standard",
+        scheduledDate: "2028-02-31",
+        scheduledStartTime: "10:00",
+        address: "31 Calendar Road",
+      })
+      .expect(422);
+
+    expect(response.body.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: "scheduledDate",
+          message: "Use a valid calendar date.",
+        }),
+      ]),
+    );
+  });
+
   it("uses the business timezone for dashboard today around a UTC boundary", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-08-13T18:30:00.000Z"));

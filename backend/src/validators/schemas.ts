@@ -1,6 +1,10 @@
 import { z } from "zod";
+import { isValidCalendarDate } from "../utils/time.js";
 
-const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD format.");
+const dateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD format.")
+  .refine(isValidCalendarDate, "Use a valid calendar date.");
 const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:mm time format.");
 
 export const loginSchema = z.object({
@@ -46,4 +50,3 @@ export const assignStaffSchema = z.object({
 export const statusSchema = z.object({
   status: z.enum(["PENDING", "CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]),
 });
-

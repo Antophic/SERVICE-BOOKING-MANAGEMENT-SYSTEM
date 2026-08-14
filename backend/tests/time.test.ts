@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { businessDateTimeToInstant, isPastBookingDateTime, todayDateString } from "../src/utils/time.js";
+import {
+  addBusinessDays,
+  businessDateTimeToInstant,
+  isPastBookingDateTime,
+  isValidCalendarDate,
+  todayDateString,
+} from "../src/utils/time.js";
 
 describe("business timezone utilities", () => {
   it("derives the business date from the configured timezone, not UTC", () => {
@@ -17,5 +23,14 @@ describe("business timezone utilities", () => {
     expect(businessDateTimeToInstant("2026-08-14", "01:30", "Asia/Jakarta")?.toISOString()).toBe(
       "2026-08-13T18:30:00.000Z",
     );
+  });
+
+  it("rejects impossible calendar dates", () => {
+    expect(isValidCalendarDate("2026-02-31")).toBe(false);
+    expect(isValidCalendarDate("2026-02-29")).toBe(false);
+    expect(isValidCalendarDate("2028-02-29")).toBe(true);
+    expect(isValidCalendarDate("2026-04-31")).toBe(false);
+    expect(businessDateTimeToInstant("2026-02-31", "10:00", "Asia/Jakarta")).toBeNull();
+    expect(() => addBusinessDays("2026-02-31", 1)).toThrow("Invalid date value.");
   });
 });

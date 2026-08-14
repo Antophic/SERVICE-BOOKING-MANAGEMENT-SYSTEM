@@ -459,7 +459,7 @@ The default test suite uses the in-memory repository so it can run without MySQL
 npm run test:all
 ```
 
-Prisma/MySQL integration tests are opt-in. Set a dedicated disposable test database URL whose database name or host includes `test` or `integration`, apply the migrations to that database first, then run:
+Prisma/MySQL integration tests are opt-in. Set a dedicated disposable test database URL whose database name or host includes `test` or `integration`, apply the migrations to that database first, then run. The safety check only trusts the URL hostname or database name; username and password text do not count.
 
 ```bash
 DATABASE_URL=mysql://USER:PASSWORD@HOST:PORT/serviceflow_test npm --prefix backend run prisma:deploy
