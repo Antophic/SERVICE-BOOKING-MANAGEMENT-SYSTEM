@@ -1,6 +1,7 @@
 # Vercel Deployment
 
 ServiceFlow is configured as a Vite static frontend plus Vercel Node.js API functions.
+All `/api/*` requests are rewritten to the Express handler in `api/index.ts`.
 
 References:
 

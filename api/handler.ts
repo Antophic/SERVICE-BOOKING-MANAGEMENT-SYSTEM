@@ -16,7 +16,23 @@ async function getApp() {
   return appPromise;
 }
 
+function restoreApiPathForExpress(request: IncomingMessage) {
+  if (!request.url) return;
+
+  const url = new URL(request.url, "https://serviceflow.local");
+  const apiPath = url.searchParams.get("__api_path");
+  if (!apiPath) return;
+
+  url.searchParams.delete("__api_path");
+
+  const normalizedPath = apiPath.startsWith("/") ? apiPath : `/${apiPath}`;
+  const query = url.searchParams.toString();
+  request.url = `/api${normalizedPath}${query ? `?${query}` : ""}`;
+}
+
 export default async function handler(request: IncomingMessage, response: ServerResponse) {
+  restoreApiPathForExpress(request);
+
   const app = await getApp();
   app(request, response);
 }
