@@ -6,7 +6,9 @@ Booking & Job Management for Service Businesses
 
 ServiceFlow is a full-stack booking and job management application for service businesses, featuring public booking intake, staff assignment, scheduling conflict detection, role-based dashboards, job status workflows, and database-backed operations.
 
-Production screenshot: manual final step pending. Capture a real logged-in dashboard screenshot from the deployed app, save it as `public/serviceflow-dashboard.webp`, and add it below this section. Do not use a mock illustration.
+Production screenshot captured from the deployed Operations Dashboard:
+
+![ServiceFlow production operations dashboard](public/serviceflow-dashboard.webp)
 
 ## Problem
 
