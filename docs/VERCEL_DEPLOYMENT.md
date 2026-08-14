@@ -38,7 +38,7 @@ Vite
 The repository already includes `vercel.json`, so Vercel should use:
 
 ```text
-Install Command: npm ci && npm --prefix backend ci && npm --prefix backend run prisma:generate
+Install Command: npm ci --include=dev && npm --prefix backend ci --include=dev && npm --prefix backend run prisma:generate
 Build Command: npm run typecheck:all && npm run build:all && npm --prefix backend run prisma:deploy && npm --prefix backend run prisma:seed
 Output Directory: dist
 ```

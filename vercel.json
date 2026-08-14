@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm ci && npm --prefix backend ci && npm --prefix backend run prisma:generate",
+  "installCommand": "npm ci --include=dev && npm --prefix backend ci --include=dev && npm --prefix backend run prisma:generate",
   "buildCommand": "npm run typecheck:all && npm run build:all && npm --prefix backend run prisma:deploy && npm --prefix backend run prisma:seed",
   "outputDirectory": "dist",
   "rewrites": [
