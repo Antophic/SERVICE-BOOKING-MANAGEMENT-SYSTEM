@@ -1,6 +1,6 @@
 import { Router } from "express";
 import type { DataStore } from "../repositories/types.js";
-import { requireAuth, requireRole } from "../middlewares/auth.js";
+import { getRequiredUser, requireAuth, requireRole } from "../middlewares/auth.js";
 import { requireCsrf } from "../middlewares/csrf.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -27,7 +27,8 @@ export function createStaffRouter(store: DataStore) {
     requireAuth,
     requireRole("STAFF"),
     asyncHandler(async (request, response) => {
-      response.json({ bookings: await store.listAssignedBookings(request.user!.id) });
+      const user = getRequiredUser(request);
+      response.json({ bookings: await store.listAssignedBookings(user.id) });
     }),
   );
 
@@ -36,7 +37,8 @@ export function createStaffRouter(store: DataStore) {
     requireAuth,
     requireRole("STAFF"),
     asyncHandler(async (request, response) => {
-      const booking = await store.getAssignedBooking(request.user!.id, routeId(request.params.id));
+      const user = getRequiredUser(request);
+      const booking = await store.getAssignedBooking(user.id, routeId(request.params.id));
       if (!booking) throw new ApiError(404, "Booking not found.");
       response.json({ booking });
     }),
@@ -49,9 +51,10 @@ export function createStaffRouter(store: DataStore) {
     requireCsrf,
     asyncHandler(async (request, response) => {
       const input = statusSchema.parse(request.body);
+      const user = getRequiredUser(request);
       const booking = await store.updateBookingStatus(routeId(request.params.id), input.status, {
-        id: request.user!.id,
-        role: request.user!.role,
+        id: user.id,
+        role: user.role,
       });
       response.json({ message: "Job status updated.", booking });
     }),

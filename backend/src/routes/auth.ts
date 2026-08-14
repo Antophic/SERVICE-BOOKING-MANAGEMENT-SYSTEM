@@ -6,7 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { toPublicUser } from "../utils/publicUser.js";
 import { createCsrfToken, csrfCookieOptions } from "../middlewares/csrf.js";
-import { requireAuth, signAuthToken } from "../middlewares/auth.js";
+import { getRequiredUser, requireAuth, signAuthToken } from "../middlewares/auth.js";
 import { loginSchema } from "../validators/schemas.js";
 
 export function createAuthRouter(store: DataStore) {
@@ -41,7 +41,7 @@ export function createAuthRouter(store: DataStore) {
     const csrfToken = request.cookies?.[env.CSRF_COOKIE_NAME] ?? createCsrfToken();
 
     response.cookie(env.CSRF_COOKIE_NAME, csrfToken, csrfCookieOptions());
-    response.json({ user: request.user, csrfToken });
+    response.json({ user: getRequiredUser(request), csrfToken });
   });
 
   return router;

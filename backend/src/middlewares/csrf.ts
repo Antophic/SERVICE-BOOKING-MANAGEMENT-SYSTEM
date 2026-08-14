@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import type { NextFunction, Request, Response } from "express";
 import { env } from "../config/env.js";
 import { ApiError } from "../utils/ApiError.js";
+import { getRequestUser } from "./auth.js";
 
 export function createCsrfToken() {
   return randomBytes(24).toString("hex");
@@ -17,7 +18,7 @@ export function csrfCookieOptions() {
 }
 
 export function requireCsrf(request: Request, _response: Response, next: NextFunction) {
-  if (!request.user || ["GET", "HEAD", "OPTIONS"].includes(request.method)) {
+  if (!getRequestUser(request) || ["GET", "HEAD", "OPTIONS"].includes(request.method)) {
     next();
     return;
   }

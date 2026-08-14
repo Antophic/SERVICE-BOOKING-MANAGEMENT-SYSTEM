@@ -1,6 +1,6 @@
 import { Router } from "express";
 import type { DataStore } from "../repositories/types.js";
-import { requireAuth, requireRole } from "../middlewares/auth.js";
+import { getRequiredUser, requireAuth, requireRole } from "../middlewares/auth.js";
 import { requireCsrf } from "../middlewares/csrf.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -37,9 +37,10 @@ export function createBookingsRouter(store: DataStore) {
     requireCsrf,
     asyncHandler(async (request, response) => {
       const input = updateBookingSchema.parse(request.body);
+      const user = getRequiredUser(request);
       const booking = await store.updateBooking(routeId(request.params.id), input, {
-        id: request.user!.id,
-        role: request.user!.role,
+        id: user.id,
+        role: user.role,
       });
       response.json({ message: "Booking updated.", booking });
     }),
@@ -49,9 +50,10 @@ export function createBookingsRouter(store: DataStore) {
     "/:id",
     requireCsrf,
     asyncHandler(async (request, response) => {
+      const user = getRequiredUser(request);
       const booking = await store.updateBookingStatus(routeId(request.params.id), "CANCELLED", {
-        id: request.user!.id,
-        role: request.user!.role,
+        id: user.id,
+        role: user.role,
       });
       response.json({ message: "Booking cancelled.", booking });
     }),
@@ -62,9 +64,10 @@ export function createBookingsRouter(store: DataStore) {
     requireCsrf,
     asyncHandler(async (request, response) => {
       const input = assignStaffSchema.parse(request.body);
+      const user = getRequiredUser(request);
       const booking = await store.assignStaff(routeId(request.params.id), input.staffId, {
-        id: request.user!.id,
-        role: request.user!.role,
+        id: user.id,
+        role: user.role,
       });
       response.json({ message: "Staff assigned.", booking });
     }),
@@ -75,9 +78,10 @@ export function createBookingsRouter(store: DataStore) {
     requireCsrf,
     asyncHandler(async (request, response) => {
       const input = statusSchema.parse(request.body);
+      const user = getRequiredUser(request);
       const booking = await store.updateBookingStatus(routeId(request.params.id), input.status, {
-        id: request.user!.id,
-        role: request.user!.role,
+        id: user.id,
+        role: user.role,
       });
       response.json({ message: "Booking status updated.", booking });
     }),
