@@ -32,7 +32,7 @@ export function AppShell({ activeView, onViewChange, user, onLogout, children }:
     <div className="app-shell">
       <aside className="sidebar" aria-label="Primary navigation">
         <div className="brand-block">
-          <div className="brand-mark">SF</div>
+          <img className="brand-mark" src="/serviceflow-mark.svg" alt="" aria-hidden="true" />
           <div>
             <strong>ServiceFlow</strong>
             <span>Booking Operations</span>

@@ -1,0 +1,19 @@
+<svg width="420" height="104" viewBox="0 0 420 104" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">ServiceFlow logo</title>
+  <desc id="desc">ServiceFlow wordmark with a routed service path brand mark.</desc>
+  <rect x="4" y="8" width="88" height="88" rx="22" fill="url(#paint0_linear)" />
+  <path d="M31.5 39.4C31.5 32.5 37.1 27.2 44.9 27.2C50.6 27.2 55.1 29.5 57.9 33.5" stroke="#FFFFFF" stroke-width="6.2" stroke-linecap="round" />
+  <path d="M63.4 41.3C63.4 48.2 58 52 48.3 54C39.1 55.9 33.1 59.2 33.1 66.3C33.1 73.1 38.9 77.9 47.5 77.9C55 77.9 60.7 74.6 63.8 69.1" stroke="#FFFFFF" stroke-width="6.2" stroke-linecap="round" />
+  <path d="M58 60.3L65.1 67.4L77 54.5" stroke="#78D8A6" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="29.9" cy="38.9" r="4.1" fill="#78D8A6" />
+  <circle cx="65.8" cy="40.9" r="4.1" fill="#78D8A6" />
+  <text x="116" y="54" fill="#102A43" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" letter-spacing="0">Service</text>
+  <text x="244" y="54" fill="#31735F" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" letter-spacing="0">Flow</text>
+  <text x="118" y="78" fill="#62707F" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="600" letter-spacing="1.8">BOOKING OPERATIONS</text>
+  <defs>
+    <linearGradient id="paint0_linear" x1="16.8" y1="17.2" x2="82.8" y2="88.7" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F4D76" />
+      <stop offset="1" stop-color="#102A43" />
+    </linearGradient>
+  </defs>
+</svg>

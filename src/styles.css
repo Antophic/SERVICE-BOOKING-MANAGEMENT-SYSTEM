@@ -61,14 +61,11 @@ textarea:focus-visible {
 }
 
 .brand-mark {
-  display: grid;
-  place-items: center;
   width: 42px;
   height: 42px;
-  border-radius: 8px;
-  background: #143b5d;
-  color: #ffffff;
-  font-weight: 800;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  box-shadow: 0 10px 22px rgba(16, 42, 67, 0.14);
 }
 
 .brand-block strong,
@@ -117,6 +114,14 @@ textarea:focus-visible {
   min-height: 100vh;
   gap: 8px;
   color: #62707f;
+}
+
+.boot-logo {
+  width: 58px;
+  height: 58px;
+  margin-bottom: 6px;
+  border-radius: 14px;
+  box-shadow: 0 16px 36px rgba(16, 42, 67, 0.16);
 }
 
 .boot-screen strong {

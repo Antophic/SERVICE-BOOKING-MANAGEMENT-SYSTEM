@@ -1,0 +1,16 @@
+<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">ServiceFlow mark</title>
+  <desc id="desc">A professional ServiceFlow brand mark with a routed service path and check mark.</desc>
+  <rect width="96" height="96" rx="22" fill="url(#paint0_linear)" />
+  <path d="M30 35.5C30 27.9 36.2 22 44.8 22C51.1 22 56.1 24.5 59.2 28.9" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" />
+  <path d="M65.5 37.5C65.5 45.2 59.5 49.4 48.8 51.6C38.6 53.7 32 57.3 32 65.2C32 72.7 38.4 78 47.9 78C56.2 78 62.5 74.3 65.9 68.3" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" />
+  <path d="M59.5 58.6L67.2 66.3L80 52.5" stroke="#78D8A6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="28" cy="35" r="4.5" fill="#78D8A6" />
+  <circle cx="68" cy="37" r="4.5" fill="#78D8A6" />
+  <defs>
+    <linearGradient id="paint0_linear" x1="14" y1="10" x2="86" y2="88" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F4D76" />
+      <stop offset="1" stop-color="#102A43" />
+    </linearGradient>
+  </defs>
+</svg>

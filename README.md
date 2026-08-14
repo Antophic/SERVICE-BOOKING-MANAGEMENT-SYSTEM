@@ -1,5 +1,9 @@
 # ServiceFlow
 
+<p>
+  <img src="public/serviceflow-logo.svg" alt="ServiceFlow logo" width="280" />
+</p>
+
 Booking & Job Management for Service Businesses
 
 [Live Demo](https://service-booking-management-system.vercel.app) | [Repository](https://github.com/Antophic/SERVICE-BOOKING-MANAGEMENT-SYSTEM)

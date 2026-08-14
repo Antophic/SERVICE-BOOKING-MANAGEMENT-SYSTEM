@@ -59,6 +59,7 @@ export function App() {
   if (loadingSession) {
     return (
       <div className="boot-screen">
+        <img className="boot-logo" src="/serviceflow-mark.svg" alt="" aria-hidden="true" />
         <strong>ServiceFlow</strong>
         <span>Restoring session...</span>
       </div>
